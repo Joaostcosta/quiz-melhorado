@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Quiz - Batalha das Equipes</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+      overflow-x: hidden;
+
+      background:
+        radial-gradient(circle at 20% 20%, #3b1b72 0%, transparent 30%),
+        radial-gradient(circle at 80% 80%, #0c5c72 0%, transparent 30%),
+        linear-gradient(135deg, #080018, #101a3a, #001b2e);
+
+      background-size: 200% 200%;
+      animation: backgroundMove 12s ease infinite;
+    }
+
+    @keyframes backgroundMove {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Partículas do fundo */
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      animation: floatParticle linear infinite;
+    }
+
+    @keyframes floatParticle {
+      from {
+        transform: translateY(110vh);
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      80% {
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(-10vh);
+        opacity: 0;
+      }
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      width: min(1100px, 94%);
+      margin: auto;
+      padding: 25px 0 50px;
+    }
+
+    /* Título */
+
+    .title {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .title h1 {
+      font-size: clamp(2rem, 6vw, 4rem);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+
+      background: linear-gradient(
+        90deg,
+        #00eaff,
+        #ffffff,
+        #ffdd00,
+        #ff4ecd
+      );
+
+      background-size: 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+
+      animation: titleGradient 5s linear infinite;
+    }
+
+    @keyframes titleGradient {
+      0% {
+        background-position: 0%;
+      }
+
+      100% {
+        background-position: 300%;
+      }
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #bfc9ff;
+      font-size: 1rem;
+    }
+
+    /* Placar */
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .team {
+      position: relative;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .team.active {
+      transform: scale(1.05);
+      box-shadow:
+        0 0 15px currentColor,
+        0 0 35px currentColor;
+    }
+
+    .team-red {
+      color: #ff4757;
+      border-color: rgba(255,71,87,0.5);
+    }
+
+    .team-blue {
+      color: #25a7ff;
+      border-color: rgba(37,167,255,0.5);
+    }
+
+    .team h2 {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+
+    .score {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+
+    .vs {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    /* Equipe atual */
+
+    .current-team {
+      text-align: center;
+      margin: 15px 0 25px;
+    }
+
+    .current-team span {
+      display: inline-block;
+      padding: 12px 25px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+
+      50% {
+        box-shadow: 0 0 25px rgba(255,255,255,0.25);
+      }
+    }
+
+    /* Barra de progresso */
+
+    .progress-container {
+      margin-bottom: 25px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      color: #dbe2ff;
+    }
+
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 20px;
+
+      background: linear-gradient(
+        90deg,
+        #00eaff,
+        #8a5cff,
+        #ff4ecd
+      );
+
+      transition: width 0.5s ease;
+    }
+
+    /* Card da pergunta */
+
+    .quiz-card {
+      padding: 30px;
+      border-radius: 25px;
+
+      background: rgba(10, 15, 40, 0.75);
+      border: 1px solid rgba(255,255,255,0.15);
+
+      backdrop-filter: blur(15px);
+
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.35);
+
+      animation: cardEnter 0.5s ease;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .question-number {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      color: #aab8ff;
+      margin-bottom: 15px;
+    }
+
+    .question {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      line-height: 1.4;
+      margin-bottom: 25px;
+    }
+
+    /* Alternativas */
+
+    .answers {
+      display: grid;
+      gap: 13px;
+    }
+
+    .answer {
+      width: 100%;
+      padding: 17px 20px;
+
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 15px;
+
+      background: rgba(255,255,255,0.07);
+      color: white;
+
+      font-size: 1rem;
+      text-align: left;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.2s,
+        background 0.2s,
+        border 0.2s,
+        box-shadow 0.2s;
+    }
+
+    .answer:hover {
+      transform: translateX(7px);
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    .answer:disabled {
+      cursor: default;
+    }
+
+    /* Resposta correta */
+
+    .answer.correct {
+      background: rgba(0, 230, 118, 0.25);
+      border-color: #00e676;
+      box-shadow:
+        0 0 15px rgba(0,230,118,0.5);
+
+      animation: correctAnimation 0.6s ease;
+    }
+
+    @keyframes correctAnimation {
+      0% {
+        transform: scale(1);
+      }
+
+      40% {
+        transform: scale(1.04);
+      }
+
+      70% {
+        transform: scale(0.98);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* Resposta errada */
+
+    .answer.wrong {
+      background: rgba(255, 71, 87, 0.25);
+      border-color: #ff4757;
+
+      animation: wrongAnimation 0.5s ease;
+    }
+
+    @keyframes wrongAnimation {
+      0%, 100% {
+        transform: translateX(0);
+      }
+
+      20% {
+        transform: translateX(-12px);
+      }
+
+      40% {
+        transform: translateX(12px);
+      }
+
+      60% {
+        transform: translateX(-8px);
+      }
+
+      80% {
+        transform: translateX(8px);
+      }
+    }
+
+    /* Feedback */
+
+    .feedback {
+      min-height: 50px;
+      margin-top: 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .feedback.correct {
+      color: #00e676;
+    }
+
+    .feedback.wrong {
+      color: #ff6675;
+    }
+
+    /* Botão próxima */
+
+    .next-button {
+      display: none;
+      width: 100%;
+      margin-top: 15px;
+
+      padding: 16px;
+      border: none;
+      border-radius: 15px;
+
+      background: linear-gradient(
+        90deg,
+        #5f27cd,
+        #00a8ff
+      );
+
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+
+      cursor: pointer;
+
+      transition: 0.2s;
+    }
+
+    .next-button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 25px rgba(0,168,255,0.5);
+    }
+
+    /* Combo */
+
+    .combo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+
+      transform: translate(-50%, -50%) scale(0);
+
+      z-index: 100;
+
+      font-size: clamp(2rem, 8vw, 6rem);
+      font-weight: 900;
+
+      color: #ffdd00;
+      text-shadow:
+        0 0 10px #ffdd00,
+        0 0 30px #ff9900,
+        0 0 60px #ff5500;
+
+      pointer-events: none;
+    }
+
+    .combo.show {
+      animation: comboAnimation 1.1s ease forwards;
+    }
+
+    @keyframes comboAnimation {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+
+      30% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 1;
+      }
+
+      70% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    /* Pontos voando */
+
+    .points-effect {
+      position: fixed;
+      pointer-events: none;
+      z-index: 90;
+
+      color: #00e676;
+      font-size: 2rem;
+      font-weight: bold;
+
+      animation: pointsAnimation 1s ease forwards;
+    }
+
+    @keyframes pointsAnimation {
+      from {
+        transform: translateY(0) scale(0.7);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(-100px) scale(1.4);
+        opacity: 0;
+      }
+    }
+
+    /* Confetes */
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 15px;
+      top: -20px;
+      z-index: 200;
+
+      animation: confettiFall 2.5s linear forwards;
+    }
+
+    @keyframes confettiFall {
+      to {
+        transform:
+          translateY(110vh)
+          rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* Tela final */
+
+    .final-screen {
+      display: none;
+      text-align: center;
+      padding: 45px 25px;
+    }
+
+    .final-screen.show {
+      display: block;
+      animation: finalEnter 0.7s ease;
+    }
+
+    @keyframes finalEnter {
+      from {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .trophy {
+      font-size: 6rem;
+      animation: trophyAnimation 1.5s infinite alternate;
+    }
+
+    @keyframes trophyAnimation {
+      from {
+        transform: rotate(-8deg) scale(1);
+      }
+
+      to {
+        transform: rotate(8deg) scale(1.1);
+      }
+    }
+
+    .winner-title {
+      font-size: clamp(2rem, 7vw, 4rem);
+      margin: 20px 0;
+      color: #ffdd00;
+      text-shadow: 0 0 30px #ff9900;
+    }
+
+    .final-score {
+      font-size: 1.5rem;
+      color: #dce4ff;
+      margin-bottom: 25px;
+    }
+
+    .restart {
+      border: none;
+      padding: 16px 30px;
+      border-radius: 15px;
+
+      color: white;
+      background: linear-gradient(
+        90deg,
+        #ff4757,
+        #8e44ad,
+        #2980b9
+      );
+
+      font-size: 1.1rem;
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+    .restart:hover {
+      transform: scale(1.05);
+    }
+
+    /* Responsivo */
+
+    @media (max-width: 700px) {
+      .scoreboard {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .vs {
+        display: none;
+      }
+
+      .quiz-card {
+        padding: 20px;
+      }
+
+      .score {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Partículas -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Efeito de combo -->
+  <div class="combo" id="combo"></div>
+
+  <main class="container">
+
+    <header class="title">
+      <h1>⚡ Batalha do Quiz ⚡</h1>
+      <p class="subtitle">
+        Duas equipes. Uma pergunta por vez. Quem fará mais pontos?
+      </p>
+    </header>
+
+    <!-- PLACAR -->
+
+    <section class="scoreboard">
+
+      <div class="team team-red active" id="teamRed">
+        <h2>🔴 EQUIPE VERMELHA</h2>
+        <div class="score" id="scoreRed">0</div>
+        <small>pontos</small>
+      </div>
+
+      <div class="vs">VS</div>
+
+      <div class="team team-blue" id="teamBlue">
+        <h2>🔵 EQUIPE AZUL</h2>
+        <div class="score" id="scoreBlue">0</div>
+        <small>pontos</small>
+      </div>
+
+    </section>
+
+    <!-- EQUIPE DA VEZ -->
+
+    <div class="current-team">
+      <span id="currentTeam">
+        🔴 Vez da Equipe Vermelha
+      </span>
+    </div>
+
+    <!-- PROGRESSO -->
+
+    <div class="progress-container">
+
+      <div class="progress-info">
+        <span id="questionCounter">Pergunta 1 de 10</span>
+        <span id="percentage">0%</span>
+      </div>
+
+      <div class="progress">
+        <div
+          class="progress-bar"
+          id="progressBar">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- QUIZ -->
+
+    <section class="quiz-card" id="quizCard">
+
+      <div class="question-number" id="questionNumber">
+        Pergunta 1
+      </div>
+
+      <h2 class="question" id="question">
+        Carregando pergunta...
+      </h2>
+
+      <div class="answers" id="answers"></div>
+
+      <div
+        class="feedback"
+        id="feedback">
+      </div>
+
+      <button
+        class="next-button"
+        id="nextButton"
+        onclick="nextQuestion()">
+        Próxima pergunta →
+      </button>
+
+    </section>
+
+    <!-- FINAL -->
+
+    <section
+      class="quiz-card final-screen"
+      id="finalScreen">
+
+      <div class="trophy">🏆</div>
+
+      <h1
+        class="winner-title"
+        id="winnerTitle">
+        Fim do jogo!
+      </h1>
+
+      <p
+        class="final-score"
+        id="finalScore">
+      </p>
+
+      <button
+        class="restart"
+        onclick="restartQuiz()">
+        🔄 Jogar novamente
+      </button>
+
+    </section>
+
+  </main>
+
+
+<script>
+
+  /* =====================================================
+     PERGUNTAS
+  ===================================================== */
+
+  const questions = [
+
+    {
+      question: "Qual é o maior planeta do Sistema Solar?",
+      answers: [
+        "Terra",
+        "Marte",
+        "Júpiter",
+        "Saturno"
+      ],
+      correct: 2
+    },
+
+    {
+      question: "Qual é a capital do Brasil?",
+      answers: [
+        "São Paulo",
+        "Brasília",
+        "Rio de Janeiro",
+        "Salvador"
+      ],
+      correct: 1
+    },
+
+    {
+      question: "Quanto é 8 × 7?",
+      answers: [
+        "54",
+        "56",
+        "64",
+        "48"
+      ],
+      correct: 1
+    },
+
+    {
+      question: "Qual animal é conhecido como o rei da selva?",
+      answers: [
+        "Tigre",
+        "Elefante",
+        "Leão",
+        "Onça"
+      ],
+      correct: 2
+    },
+
+    {
+      question: "Quantos continentes existem tradicionalmente?",
+      answers: [
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      correct: 3
+    },
+
+    {
+      question: "Qual destes é um planeta?",
+      answers: [
+        "Lua",
+        "Sol",
+        "Marte",
+        "Plutão"
+      ],
+      correct: 2
+    },
+
+    {
+      question: "Qual é o resultado de 100 ÷ 4?",
+      answers: [
+        "20",
+        "25",
+        "30",
+        "40"
+      ],
+      correct: 1
+    },
+
+    {
+      question: "Qual oceano é o maior do planeta?",
+      answers: [
+        "Atlântico",
+        "Índico",
+        "Ártico",
+        "Pacífico"
+      ],
+      correct: 3
+    },
+
+    {
+      question: "Qual é o símbolo químico da água?",
+      answers: [
+        "CO2",
+        "O2",
+        "H2O",
+        "NaCl"
+      ],
+      correct: 2
+    },
+
+    {
+      question: "Quantos lados possui um hexágono?",
+      answers: [
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      correct: 1
+    }
+
+  ];
+
+
+  /* =====================================================
+     CONFIGURAÇÃO DO JOGO
+  ===================================================== */
+
+  let currentQuestion = 0;
+
+  let currentTeamIndex = 0;
+
+  let scores = {
+    red: 0,
+    blue: 0
+  };
+
+  let answered = false;
+
+
+  const teams = ["red", "blue"];
+
+
+  /* =====================================================
+     ELEMENTOS
+  ===================================================== */
+
+  const questionElement =
+    document.getElementById("question");
+
+  const answersElement =
+    document.getElementById("answers");
+
+  const feedbackElement =
+    document.getElementById("feedback");
+
+  const nextButton =
+    document.getElementById("nextButton");
+
+  const scoreRed =
+    document.getElementById("scoreRed");
+
+  const scoreBlue =
+    document.getElementById("scoreBlue");
+
+  const teamRed =
+    document.getElementById("teamRed");
+
+  const teamBlue =
+    document.getElementById("teamBlue");
+
+  const currentTeamElement =
+    document.getElementById("currentTeam");
+
+  const questionNumber =
+    document.getElementById("questionNumber");
+
+  const questionCounter =
+    document.getElementById("questionCounter");
+
+  const percentage =
+    document.getElementById("percentage");
+
+  const progressBar =
+    document.getElementById("progressBar");
+
+  const quizCard =
+    document.getElementById("quizCard");
+
+  const finalScreen =
+    document.getElementById("finalScreen");
+
+  const winnerTitle =
+    document.getElementById("winnerTitle");
+
+  const finalScore =
+    document.getElementById("finalScore");
+
+  const combo =
+    document.getElementById("combo");
+
+
+  /* =====================================================
+     CARREGAR PERGUNTA
+  ===================================================== */
+
+  function loadQuestion() {
+
+    answered = false;
+
+    const q = questions[currentQuestion];
+
+    questionElement.textContent = q.question;
+
+    questionNumber.textContent =
+      `Pergunta ${currentQuestion + 1}`;
+
+    questionCounter.textContent =
+      `Pergunta ${currentQuestion + 1} de ${questions.length}`;
+
+    const progress =
+      (currentQuestion / questions.length) * 100;
+
+    progressBar.style.width = `${progress}%`;
+
+    percentage.textContent =
+      `${Math.round(progress)}%`;
+
+    answersElement.innerHTML = "";
+
+    feedbackElement.textContent = "";
+
+    feedbackElement.className = "feedback";
+
+    nextButton.style.display = "none";
+
+
+    updateTeamDisplay();
+
+
+    q.answers.forEach((answer, index) => {
+
+      const button =
+        document.createElement("button");
+
+      button.className = "answer";
+
+      button.textContent =
+        `${String.fromCharCode(65 + index)}) ${answer}`;
+
+      button.onclick =
+        () => checkAnswer(index, button);
+
+      answersElement.appendChild(button);
+
+    });
+
+
+    // Reinicia animação do card
+
+    quizCard.style.animation = "none";
+
+    void quizCard.offsetWidth;
+
+    quizCard.style.animation =
+      "cardEnter 0.5s ease";
+
+  }
+
+
+  /* =====================================================
+     MOSTRAR EQUIPE ATUAL
+  ===================================================== */
+
+  function updateTeamDisplay() {
+
+    teamRed.classList.remove("active");
+
+    teamBlue.classList.remove("active");
+
+
+    if (currentTeamIndex === 0) {
+
+      teamRed.classList.add("active");
+
+      currentTeamElement.textContent =
+        "🔴 Vez da Equipe Vermelha";
+
+      currentTeamElement.style.color =
+        "#ff4757";
+
+    } else {
+
+      teamBlue.classList.add("active");
+
+      currentTeamElement.textContent =
+        "🔵 Vez da Equipe Azul";
+
+      currentTeamElement.style.color =
+        "#25a7ff";
+    }
+
+  }
+
+
+  /* =====================================================
+     VERIFICAR RESPOSTA
+  ===================================================== */
+
+  function checkAnswer(selected, button) {
+
+    if (answered) return;
+
+    answered = true;
+
+
+    const correct =
+      questions[currentQuestion].correct;
+
+
+    const allButtons =
+      document.querySelectorAll(".answer");
+
+
+    allButtons.forEach(btn => {
+      btn.disabled = true;
+    });
+
+
+    if (selected === correct) {
+
+      button.classList.add("correct");
+
+      feedbackElement.textContent =
+        "🎉 RESPOSTA CERTA! +10 PONTOS";
+
+      feedbackElement.className =
+        "feedback correct";
+
+
+      // Pontuação
+
+      if (currentTeamIndex === 0) {
+        scores.red += 10;
+      } else {
+        scores.blue += 10;
+      }
+
+
+      updateScores();
+
+
+      // Efeito de pontos
+
+      createPointsEffect();
+
+
+      // Combo
+
+      showCombo();
+
+
+      // Confetes
+
+      createConfetti();
+
+
+    } else {
+
+      button.classList.add("wrong");
+
+      allButtons[correct].classList.add("correct");
+
+      feedbackElement.textContent =
+        "❌ RESPOSTA ERRADA!";
+
+      feedbackElement.className =
+        "feedback wrong";
+
+
+      // Pequeno efeito de erro
+
+      document.body.animate(
+        [
+          { transform: "translateX(0)" },
+          { transform: "translateX(-5px)" },
+          { transform: "translateX(5px)" },
+          { transform: "translateX(0)" }
+        ],
+        {
+          duration: 300
+        }
+      );
+
+    }
+
+
+    nextButton.style.display =
+      "block";
+
+
+    if (currentQuestion === questions.length - 1) {
+
+      nextButton.textContent =
+        "🏆 Ver resultado";
+
+    } else {
+
+      nextButton.textContent =
+        "Próxima pergunta →";
+
+    }
+
+  }
+
+
+  /* =====================================================
+     ATUALIZAR PLACAR
+  ===================================================== */
+
+  function updateScores() {
+
+    scoreRed.textContent =
+      scores.red;
+
+    scoreBlue.textContent =
+      scores.blue;
+
+
+    // Animação do placar
+
+    const element =
+      currentTeamIndex === 0
+        ? scoreRed
+        : scoreBlue;
+
+
+    element.animate(
+      [
+        {
+          transform: "scale(1)"
+        },
+        {
+          transform: "scale(1.5)",
+          color: "#fff"
+        },
+        {
+          transform: "scale(1)"
+        }
+      ],
+      {
+        duration: 600
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     PRÓXIMA PERGUNTA
+  ===================================================== */
+
+  function nextQuestion() {
+
+    currentQuestion++;
+
+
+    if (currentQuestion >= questions.length) {
+
+      showFinalScreen();
+
+      return;
+
+    }
+
+
+    // Alterna a equipe
+
+    currentTeamIndex =
+      currentTeamIndex === 0 ? 1 : 0;
+
+
+    loadQuestion();
+
+  }
+
+
+  /* =====================================================
+     EFEITO +10
+  ===================================================== */
+
+  function createPointsEffect() {
+
+    const element =
+      document.createElement("div");
+
+    element.className =
+      "points-effect";
+
+    element.textContent =
+      "+10";
+
+    element.style.left =
+      `${45 + Math.random() * 10}%`;
+
+    element.style.top =
+      "50%";
+
+    document.body.appendChild(element);
+
+
+    setTimeout(() => {
+      element.remove();
+    }, 1000);
+
+  }
+
+
+  /* =====================================================
+     COMBO
+  ===================================================== */
+
+  function showCombo() {
+
+    combo.textContent =
+      "🔥 +10 PONTOS! 🔥";
+
+    combo.classList.remove("show");
+
+    void combo.offsetWidth;
+
+    combo.classList.add("show");
+
+  }
+
+
+  /* =====================================================
+     CONFETES
+  ===================================================== */
+
+  function createConfetti() {
+
+    const colors = [
+      "#ff4757",
+      "#25a7ff",
+      "#ffdd00",
+      "#00e676",
+      "#ff4ecd",
+      "#ffffff"
+    ];
+
+
+    for (let i = 0; i < 50; i++) {
+
+      const piece =
+        document.createElement("div");
+
+      piece.className =
+        "confetti";
+
+      piece.style.left =
+        `${Math.random() * 100}%`;
+
+      piece.style.background =
+        colors[
+          Math.floor(
+            Math.random() * colors.length
+          )
+        ];
+
+      piece.style.animationDuration =
+        `${1.5 + Math.random() * 2}s`;
+
+      piece.style.transform =
+        `rotate(${Math.random() * 360}deg)`;
+
+      document.body.appendChild(piece);
+
+
+      setTimeout(() => {
+        piece.remove();
+      }, 4000);
+
+    }
+
+  }
+
+
+  /* =====================================================
+     TELA FINAL
+  ===================================================== */
+
+  function showFinalScreen() {
+
+    quizCard.style.display =
+      "none";
+
+    finalScreen.classList.add("show");
+
+
+    progressBar.style.width =
+      "100%";
+
+    percentage.textContent =
+      "100%";
+
+
+    let result;
+
+
+    if (scores.red > scores.blue) {
+
+      result =
+        "🔴 EQUIPE VERMELHA VENCEU!";
+
+      winnerTitle.style.color =
+        "#ff4757";
+
+    } else if (scores.blue > scores.red) {
+
+      result =
+        "🔵 EQUIPE AZUL VENCEU!";
+
+      winnerTitle.style.color =
+        "#25a7ff";
+
+    } else {
+
+      result =
+        "🤝 EMPATE!";
+
+      winnerTitle.style.color =
+        "#ffdd00";
+
+    }
+
+
+    winnerTitle.textContent =
+      result;
+
+
+    finalScore.innerHTML = `
+      🔴 Equipe Vermelha:
+      <strong>${scores.red} pontos</strong>
+      <br><br>
+      🔵 Equipe Azul:
+      <strong>${scores.blue} pontos</strong>
+    `;
+
+
+    createConfetti();
+
+    setTimeout(createConfetti, 500);
+
+    setTimeout(createConfetti, 1000);
+
+  }
+
+
+  /* =====================================================
+     REINICIAR
+  ===================================================== */
+
+  function restartQuiz() {
+
+    currentQuestion = 0;
+
+    currentTeamIndex = 0;
+
+    scores.red = 0;
+
+    scores.blue = 0;
+
+
+    updateScores();
+
+
+    finalScreen.classList.remove("show");
+
+    quizCard.style.display =
+      "block";
+
+
+    loadQuestion();
+
+  }
+
+
+  /* =====================================================
+     PARTÍCULAS DO FUNDO
+  ===================================================== */
+
+  function createParticles() {
+
+    const container =
+      document.getElementById("particles");
+
+
+    for (let i = 0; i < 45; i++) {
+
+      const particle =
+        document.createElement("div");
+
+      particle.className =
+        "particle";
+
+      particle.style.left =
+        `${Math.random() * 100}%`;
+
+      particle.style.animationDuration =
+        `${5 + Math.random() * 10}s`;
+
+      particle.style.animationDelay =
+        `${Math.random() * 10}s`;
+
+      const size =
+        2 + Math.random() * 5;
+
+      particle.style.width =
+        `${size}px`;
+
+      particle.style.height =
+        `${size}px`;
+
+
+      container.appendChild(particle);
+
+    }
+
+  }
+
+
+  /* =====================================================
+     INICIAR
+  ===================================================== */
+
+  createParticles();
+
+  loadQuestion();
+
+</script>
+
+</body>
+</html>
